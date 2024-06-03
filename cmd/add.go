@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
+	"log"
 
 	"github.com/eteRnaL198/barebones-git/internal"
 
@@ -17,46 +16,32 @@ var addCmd = &cobra.Command{
 		filePath := args[0]
 		entries, err := internal.Explore(filePath)
 		if err != nil {
-			fmt.Println("Error:", err)
+			log.Fatal(err)
 			return
 		}
+		objectMap := internal.NewObjectMap()
 		for _, entry := range entries {
-			if entry.IsDir {
-				fmt.Println("create tree for:", entry.Path)
-				innerFiles, err := os.ReadDir(entry.Path)
-				if err != nil {
-					fmt.Println("Error:", err)
-					return
-				}
-				for _, innerFile := range innerFiles {
-					fmt.Println(entry.Path+"has file:", innerFile.Name())
-				}
-			} else {
-				fmt.Println("create blob for:", entry.Path)
-				// err := addObjectsToIndex()
-				// if err != nil {
-				// 	fmt.Println("Error:", err)
-				// } else {
-				// 	fmt.Println("Changes added to index.")
-				// }
+			err := objectMap.AddObject(entry)
+			if err != nil {
+				log.Fatal(err)
+				return
 			}
 		}
-
+		for _, entry := range entries {
+			obj, ok := objectMap.Get(entry.Path)
+			if !ok {
+				log.Fatalf("object not found: %s", entry.Path)
+				return
+			}
+			err := internal.CreateFile(".bbgit/objects/"+obj.Hash, obj.Content)
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(addCmd)
-}
-
-func addObjectsToIndex(filePath string) error {
-	hash, err := internal.CalcHash(filePath)
-	if err != nil {
-		return err
-	}
-	err = internal.CreateBlob(filePath, ".bbgit/objects/"+hash)
-	if err != nil {
-		return err
-	}
-	return nil
 }

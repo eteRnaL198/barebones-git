@@ -1,51 +1,101 @@
 package internal
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
 )
 
-func CreateBlob(srcPath, destPath string) error {
-	sourceFile, err := os.Open(srcPath)
-	if err != nil {
-		return err
+type Object struct {
+	Name    string
+	Hash    string
+	IsTree  bool
+	Content string
+}
+
+func NewObject(name, hash, content string, isTree bool) *Object {
+	return &Object{
+		Name:    name,
+		Hash:    hash,
+		IsTree:  isTree,
+		Content: content,
 	}
-	defer sourceFile.Close()
+}
 
-	destinationFile, err := os.Create(destPath)
-	if err != nil {
-		return err
+type ObjectMap struct {
+	Objects map[string]Object // key: path, value: object
+}
+
+func NewObjectMap() *ObjectMap {
+	return &ObjectMap{
+		Objects: make(map[string]Object),
 	}
-	defer destinationFile.Close()
+}
 
-	fileName := filepath.Base(srcPath)
-	scanner := bufio.NewScanner(sourceFile)
-	writer := bufio.NewWriter(destinationFile)
-
-	if _, err := writer.WriteString(fmt.Sprintf("blob %s\n", fileName)); err != nil {
-		return err
-	}
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		if _, err := writer.WriteString(fmt.Sprintf("%s\n", line)); err != nil {
+func (om *ObjectMap) AddObject(entry Entry) error {
+	if entry.IsDir {
+		tree, err := om.newTreeObject(entry)
+		if err != nil {
 			return err
 		}
+		om.Objects[entry.Path] = *tree
+	} else {
+		blob, err := om.newBlobOject(entry)
+		if err != nil {
+			return err
+		}
+		om.Objects[entry.Path] = *blob
 	}
-
-	if err := writer.Flush(); err != nil {
-		return err
-	}
-
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
-// func CreateTree() error {
+func (om *ObjectMap) Get(path string) (Object, bool) {
+	if obj, ok := om.Objects[path]; ok {
+		return obj, true
+	}
+	return Object{}, false
+}
 
-// }
+func (om *ObjectMap) newTreeObject(entry Entry) (*Object, error) {
+	entries, err := os.ReadDir(entry.Path)
+	if err != nil {
+		return &Object{}, err
+	}
+	content := ""
+	for _, e := range entries {
+		obj, ok := om.Get(entry.Path + "/" + e.Name())
+		if !ok {
+			return &Object{}, fmt.Errorf("object not found: %s", entry.Path+"/"+e.Name())
+		}
+		var objType string
+		if obj.IsTree {
+			objType = "tree"
+		} else {
+			objType = "blob"
+		}
+		content += fmt.Sprintf("%s %s %s\n", objType, obj.Hash, e.Name())
+	}
+	hash := CalcHash(content)
+	return &Object{
+		Name:    filepath.Base(entry.Path),
+		Hash:    hash,
+		IsTree:  true,
+		Content: content,
+	}, nil
+}
+
+func (om *ObjectMap) newBlobOject(entry Entry) (*Object, error) {
+	contentInBytes, err := os.ReadFile(entry.Path)
+	if err != nil {
+		return &Object{}, err
+	}
+	fileContent := string(contentInBytes)
+	blobContent := "blob\n" + fileContent
+	hash := CalcHash(blobContent)
+	return &Object{
+		Name:    filepath.Base(entry.Path),
+		Hash:    hash,
+		IsTree:  false,
+		Content: blobContent,
+	}, nil
+}
