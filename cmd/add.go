@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/eteRnaL198/barebones-git/internal"
 
@@ -14,25 +15,33 @@ var addCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		filePath := args[0]
-		files, err := internal.Explore(filePath)
+		entries, err := internal.Explore(filePath)
 		if err != nil {
 			fmt.Println("Error:", err)
 			return
 		}
-		for _, file := range files {
-			if file.IsDir {
-				fmt.Println("create tree for:", file.Path)
+		for _, entry := range entries {
+			if entry.IsDir {
+				fmt.Println("create tree for:", entry.Path)
+				innerFiles, err := os.ReadDir(entry.Path)
+				if err != nil {
+					fmt.Println("Error:", err)
+					return
+				}
+				for _, innerFile := range innerFiles {
+					fmt.Println(entry.Path+"has file:", innerFile.Name())
+				}
 			} else {
-				fmt.Println("create blob for:", file.Path)
+				fmt.Println("create blob for:", entry.Path)
+				// err := addObjectsToIndex()
+				// if err != nil {
+				// 	fmt.Println("Error:", err)
+				// } else {
+				// 	fmt.Println("Changes added to index.")
+				// }
 			}
 		}
 
-		// err := addObjectsToIndex()
-		// if err != nil {
-		// 	fmt.Println("Error:", err)
-		// } else {
-		// 	fmt.Println("Changes added to index.")
-		// }
 	},
 }
 
