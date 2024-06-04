@@ -63,7 +63,7 @@ func (om *ObjectMap) newTreeObject(entry Entry) (*Object, error) {
 	}
 	content := ""
 	for _, e := range entries {
-		obj, ok := om.Get(entry.Path + "/" + e.Name())
+		obj, ok := om.Get(filepath.Join(entry.Path, e.Name()))
 		if !ok {
 			return &Object{}, fmt.Errorf("object not found: %s", entry.Path+"/"+e.Name())
 		}
