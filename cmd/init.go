@@ -26,20 +26,26 @@ func init() {
 }
 
 func initRepo() error {
-	gitDir := filepath.Join(".bbgit")
-	err := os.Mkdir(gitDir, 0755)
+	gitDirPath := filepath.Join(".bbgit")
+	err := os.Mkdir(gitDirPath, 0755)
 	if err != nil {
 		return err
 	}
 
-	objectsDir := filepath.Join(gitDir, "objects")
-	err = os.Mkdir(objectsDir, 0755)
+	objectsDirPath := filepath.Join(gitDirPath, "objects")
+	err = os.Mkdir(objectsDirPath, 0755)
 	if err != nil {
 		return err
 	}
 
-	rootDir := filepath.Join("root")
-	err = os.Mkdir(rootDir, 0755)
+	indexFilePath := filepath.Join(gitDirPath, "index")
+	_, err = os.Create(indexFilePath)
+	if err != nil {
+		return err
+	}
+
+	headFilePath := filepath.Join(gitDirPath, "HEAD")
+	_, err = os.Create(headFilePath)
 	if err != nil {
 		return err
 	}
