@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"os"
 
 	"github.com/eteRnaL198/barebones-git/internal"
 
@@ -13,35 +14,59 @@ var addCmd = &cobra.Command{
 	Short: "Add file contents to the index",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		filePath := args[0]
-		entries, err := internal.Explore(filePath)
+		err := add(args[0])
 		if err != nil {
 			log.Fatal(err)
-			return
-		}
-		objectMap := internal.NewObjectMap()
-		for _, entry := range entries {
-			err := objectMap.AddObject(entry)
-			if err != nil {
-				log.Fatal(err)
-				return
-			}
-		}
-		for _, entry := range entries {
-			obj, ok := objectMap.Get(entry.Path)
-			if !ok {
-				log.Fatalf("object not found: %s", entry.Path)
-				return
-			}
-			err := internal.CreateFile(".bbgit/objects/"+obj.Hash, obj.Content)
-			if err != nil {
-				log.Fatal(err)
-				return
-			}
 		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(addCmd)
+}
+
+func add(filePath string) error {
+	files, err := internal.ExploreFiles(filePath)
+	if err != nil {
+		return err
+	}
+
+	var blobs []blob
+	for _, file := range files {
+		blob := NewBlob(file.Content, file.Path)
+		blobs = append(blobs, *blob)
+	}
+
+	for _, blob := range blobs {
+		err := internal.CreateFile(*internal.NewFile(".bbgit/objects/"+blob.Hash, blob.Content))
+		if err != nil {
+			return err
+		}
+
+		indexFile, err := os.OpenFile(".bbgit/index", os.O_APPEND|os.O_RDWR, 0666)
+		if err != nil {
+			return err
+		}
+		defer indexFile.Close()
+		_, err = indexFile.WriteString(blob.Hash + " " + blob.Path + "\n")
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+type blob struct {
+	Path    string
+	Hash    string
+	Content string
+}
+
+func NewBlob(content, path string) *blob {
+	return &blob{
+		Path:    path,
+		Hash:    internal.CalcHash(content),
+		Content: "blob\n" + content,
+	}
 }

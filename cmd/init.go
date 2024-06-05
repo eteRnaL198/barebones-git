@@ -44,11 +44,5 @@ func initRepo() error {
 		return err
 	}
 
-	headFilePath := filepath.Join(gitDirPath, "HEAD")
-	_, err = os.Create(headFilePath)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
