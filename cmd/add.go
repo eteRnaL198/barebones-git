@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"log"
-	"os"
 
 	"github.com/eteRnaL198/barebones-git/internal"
 
@@ -37,29 +36,17 @@ func add(filePath string) error {
 		blobs = append(blobs, *blob)
 	}
 
-	indexFile, err := os.OpenFile(".bbgit/index", os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		return err
-	}
-	defer indexFile.Close()
-	indexContentsInBytes, err := os.ReadFile(".bbgit/index")
-	if err != nil {
-		return nil
-	}
-	indexContents := internal.ParseIndexFile(string(indexContentsInBytes))
-
+	var indexContent string
 	for _, blob := range blobs {
-		if internal.Contains(indexContents, blob.Path) {
-			continue
-		}
 		err := internal.CreateFile(*internal.NewFile(".bbgit/objects/"+blob.Hash, blob.Content))
 		if err != nil {
 			return err
 		}
-		_, err = indexFile.WriteString(blob.Hash + " " + blob.Path + "\n")
-		if err != nil {
-			return err
-		}
+		indexContent += blob.Hash + " " + blob.Path + "\n"
+	}
+	err = internal.CreateFile(*internal.NewFile(".bbgit/index", indexContent))
+	if err != nil {
+		return err
 	}
 
 	return nil

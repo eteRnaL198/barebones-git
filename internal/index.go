@@ -11,15 +11,6 @@ type IndexContent struct {
 	Path string
 }
 
-func Contains(indexContents []IndexContent, path string) bool {
-	for _, entry := range indexContents {
-		if entry.Path == path {
-			return true
-		}
-	}
-	return false
-}
-
 func ParseIndexFile(indexFile string) []IndexContent {
 	var indexContents []IndexContent
 	lines := strings.Split(indexFile, "\n")
