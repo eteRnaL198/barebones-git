@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var LogCmd = &cobra.Command{
+var logCmd = &cobra.Command{
 	Use:   "log",
 	Short: "Show commit logs",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -20,7 +20,7 @@ var LogCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(LogCmd)
+	rootCmd.AddCommand(logCmd)
 }
 
 func displayCommitLog() error {
