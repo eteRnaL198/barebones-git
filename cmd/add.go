@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"path/filepath"
 
 	"github.com/eteRnaL198/barebones-git/internal"
 
@@ -9,11 +10,10 @@ import (
 )
 
 var addCmd = &cobra.Command{
-	Use:   "add <filename>",
+	Use:   "add",
 	Short: "Add file contents to the index",
-	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := add(args[0])
+		err := add(filepath.Join("root"))
 		if err != nil {
 			log.Fatal(err)
 		}

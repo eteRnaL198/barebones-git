@@ -50,5 +50,19 @@ func commit() error {
 		return err
 	}
 
+	logFile, err := os.OpenFile(".bbgit/logs", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	if err != nil {
+		return err
+	}
+	defer logFile.Close()
+	jst, err := internal.GetJst()
+	if err != nil {
+		return err
+	}
+	_, err = logFile.Write([]byte("Commit: " + commitHash + "\n" + "Date: " + jst + "\n\n"))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

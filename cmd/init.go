@@ -38,5 +38,11 @@ func initRepo() error {
 		return err
 	}
 
+	rootDirPath := filepath.Join("root")
+	err = os.Mkdir(rootDirPath, 0755)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

@@ -37,7 +37,7 @@ func ParseIndexContents(indexEntries []IndexContent) *treeNode {
 		}
 		current.Children[parts[len(parts)-1]] = newBlobNode(entry.Hash, parts[len(parts)-1])
 	}
-	return root
+	return root.Children["root"].(*treeNode)
 }
 
 func CreateTreeObject(tree treeNode) string {
