@@ -38,11 +38,5 @@ func initRepo() error {
 		return err
 	}
 
-	indexFilePath := filepath.Join(gitDirPath, "index")
-	_, err = os.Create(indexFilePath)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
