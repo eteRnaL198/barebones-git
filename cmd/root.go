@@ -13,6 +13,10 @@ var rootCmd = &cobra.Command{
 	Long:  `BareBonesGit is a small-scale clone of Git, written in Go.`,
 }
 
+func init() {
+	rootCmd.Root().CompletionOptions.DisableDefaultCmd = true
+}
+
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
